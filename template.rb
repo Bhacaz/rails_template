@@ -1,6 +1,6 @@
 
 # Base command
-# rails new app --template template.rb --css=tailwind --skip-jbuilder --skip-test --skip-action-mailbox --skip-bundle
+# rails new app --template template.rb --css=tailwind --javascript=importmap --skip-jbuilder --skip-test --skip-action-mailbox --skip-kamal
 
 # ==== Gems
 gem 'turbo_power'
@@ -21,14 +21,19 @@ end
 # debugger
 run "bundle install"
 
-rails_command "tailwindcss:install"
+# ==== TurboPower
 
+run './bin/importmap pin turbo_power'
+
+# ==== Tailwind CSS
+# Will only use puma plugin in development
 run 'rm bin/dev'
 run 'rm Procfile.dev'
 insert_into_file 'config/puma.rb' do
   "\nplugin :tailwindcss if ENV.fetch(\"RAILS_ENV\", \"development\") == \"development\"\n"
 end
 
+# ==== DaisyUI
 require 'net/http'
 response = Net::HTTP.get_response(
   URI.parse('https://raw.githubusercontent.com/Bhacaz/rails_template/refs/heads/main/daisyui-4.12.13.js')
@@ -52,7 +57,8 @@ insert_into_file 'config/tailwind.config.js', before: /^}/ do
 end
 
 gsub_file 'app/views/layouts/application.html.erb', '<html>', '<html data-theme="night">'
-# Home page
+
+# ==== Home page
 generate "controller home index --skip-helper"
 
 run 'rm app/views/home/index.html.erb'
@@ -65,7 +71,7 @@ file 'app/views/home/index.html.erb', <<~CODE
         Rails <%= Rails::VERSION::STRING %>
       </p>
       <p class="py-6">
-        Generated with <a class="link link-hover" href=https://github.com/Bhacaz/rails_template>github.com/Bhacaz/rails_template</a>
+        Generated with <a class="link link-hover font-bold" href=https://github.com/Bhacaz/rails_template>github.com/Bhacaz/rails_template</a>
       </p>
       <button class="btn btn-primary">Get Started</button>
     </div>
@@ -75,6 +81,8 @@ CODE
 
 route "root to: 'home#index'"
 
+# ==== Hotwire Livereload
+# Skip tasks installation to avoid installing Redis
 content = <<~HTML
     \n    <%= hotwire_livereload_tags if Rails.env.development? %>
   HTML
@@ -83,32 +91,15 @@ insert_into_file 'app/views/layouts/application.html.erb', content.chop, before:
 gsub_file 'app/views/layouts/application.html.erb',
           '<%= stylesheet_link_tag "app", "data-turbo-track": "reload" %>',
           '<%= stylesheet_link_tag "app", "data-turbo-track": Rails.env.development? ? "reload" : "" %>'
-gsub_file 'Gemfile', "gem \"redis\"\n", ""
-run "bundle install"
 
-# development_config = <<~YAML
-# development:
-#   primary:
-#     <<: *default
-#     database: storage/development.sqlite3
-#   cache:
-#     <<: *default
-#     database: storage/development_cache.sqlite3
-#     migrations_paths: db/cache_migrate
-#   queue:
-#     <<: *default
-#     database: storage/development_queue.sqlite3
-#     migrations_paths: db/queue_migrate
-#   cable:
-#     <<: *default
-#     database: storage/development_cable.sqlite3
-#     migrations_paths: db/cable_migrate
-# YAML
-# rails_command "solid_cable:install"
+# ==== SolidQueue development
 
-# gsub_file 'config/database.yml', /development:\n  <<: \*default\n  database: storage\/development.sqlite3/, development_config
+# insert_into_file 'config/environments/development.rb', after: "config.active_job.verbose_enqueue_logs = true\n" do
+#   "  config.active_job.queue_adapter = :solid_queue
+#    config.solid_queue.connects_to = { database: { writing: :queue } }"
+# end
 
 # RSpec
-generate "rspec:install"
+# generate "rspec:install"
 
 

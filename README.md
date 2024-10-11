@@ -11,5 +11,8 @@
 * Skip
   * JBuilder
   * ActionMailbox
-* mission_control-jobs
+  * Kamal
+* SolidQueue
+  * Setup in dev 
+  * mission_control-jobs
 
