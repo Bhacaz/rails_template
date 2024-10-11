@@ -24,6 +24,16 @@ run "bundle install"
 # ==== TurboPower
 
 run './bin/importmap pin turbo_power'
+gsub_file 'config/importmap.rb',
+          'pin "@hotwired/turbo-rails", to: "turbo.min.js"',
+          'pin "@hotwired/turbo", to: "turbo.min.js"'
+gsub_file 'app/javascript/application.js',
+          "import '@hotwired/turbo-rails'",
+          "import { Turbo } from '@hotwired/turbo'"
+append_to_file 'app/javascript/application.js', <<~JS
+  import TurboPower from 'turbo_power'
+  TurboPower.initialize(Turbo.StreamActions)
+JS
 
 # ==== Tailwind CSS
 # Will only use puma plugin in development
